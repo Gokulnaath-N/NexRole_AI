@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Data files
+*.csv
+*.parquet
+*.json
+data/
+raw_data/
+processed_data/
+
+# Models
+models/
+saved_models/
+*.pkl
+*.joblib
+
+# Experiments & Notebooks
+experiments/
+*.ipynb
+.ipynb_checkpoints
+
+# Reports
+reports/
+*.html
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log

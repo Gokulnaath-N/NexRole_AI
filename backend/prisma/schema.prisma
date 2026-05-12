@@ -1,0 +1,264 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                 String          @id
+  name               String
+  email              String          @unique
+  image              String?
+  role               UserRole        @default(LEARNER)
+  xp                 Int             @default(0)
+  streak             Int             @default(0)
+  longestStreak      Int             @default(0)
+  lastActiveDate     DateTime?
+  targetRole         String?
+  targetCompany      String?
+  experienceLevel    ExperienceLevel @default(BEGINNER)
+  weeklyHours        Int             @default(5)
+  onboardingComplete Boolean         @default(false)
+  skills             String[]
+  banned             Boolean         @default(false)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  bookmarkedJobs     BookmarkedJob[]
+  certificates       Certificate[]
+  enrollments        Enrollment[]
+  notifications      Notification[]
+  progressRecords    Progress[]
+  quizAttempts       QuizAttempt[]
+}
+
+model Domain {
+  id              String         @id @default(cuid())
+  slug            String         @unique
+  name            String
+  description     String
+  icon            String
+  color           String
+  demandScore     Int            @default(0)
+  jobCount        Int            @default(0)
+  tags            String[]
+  status          PublishStatus  @default(DRAFT)
+  enrollmentCount Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  certificates    Certificate[]
+  enrollments     Enrollment[]
+  learningPaths   LearningPath[]
+  modules         Module[]
+}
+
+model LearningPath {
+  id            String   @id @default(cuid())
+  domainId      String
+  companyTarget String
+  roleTarget    String
+  durationDays  Int
+  moduleOrder   Json
+  createdAt     DateTime @default(now())
+  domain        Domain   @relation(fields: [domainId], references: [id])
+}
+
+model Module {
+  id              String        @id @default(cuid())
+  domainId        String
+  title           String
+  description     String
+  content         String
+  notionPageId    String?
+  order           Int
+  durationMinutes Int           @default(15)
+  type            ContentType   @default(READING)
+  difficulty      Difficulty    @default(EASY)
+  xpReward        Int           @default(50)
+  status          PublishStatus @default(DRAFT)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  domain          Domain        @relation(fields: [domainId], references: [id])
+  progressRecords Progress[]
+  quizzes         Quiz[]
+
+  @@index([domainId, order])
+}
+
+model Enrollment {
+  id              String    @id @default(cuid())
+  userId          String
+  domainId        String
+  currentModuleId String?
+  completedAt     DateTime?
+  enrolledAt      DateTime  @default(now())
+  domain          Domain    @relation(fields: [domainId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, domainId])
+}
+
+model Progress {
+  id               String    @id @default(cuid())
+  userId           String
+  moduleId         String
+  completed        Boolean   @default(false)
+  completedAt      DateTime?
+  timeSpentMinutes Int       @default(0)
+  score            Int?
+  createdAt        DateTime  @default(now())
+  module           Module    @relation(fields: [moduleId], references: [id])
+  user             User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, moduleId])
+  @@index([userId])
+}
+
+model Quiz {
+  id            String        @id @default(cuid())
+  moduleId      String
+  question      String
+  options       Json
+  correctAnswer Int
+  explanation   String
+  difficulty    Difficulty    @default(MEDIUM)
+  createdAt     DateTime      @default(now())
+  module        Module        @relation(fields: [moduleId], references: [id])
+  attempts      QuizAttempt[]
+}
+
+model QuizAttempt {
+  id             String   @id @default(cuid())
+  userId         String
+  quizId         String
+  selectedAnswer Int
+  isCorrect      Boolean
+  attemptedAt    DateTime @default(now())
+  quiz           Quiz     @relation(fields: [quizId], references: [id])
+  user           User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Certificate {
+  id               String   @id @default(cuid())
+  userId           String
+  domainId         String
+  verificationCode String   @unique
+  pdfUrl           String?
+  issuedAt         DateTime @default(now())
+  domain           Domain   @relation(fields: [domainId], references: [id])
+  user             User     @relation(fields: [userId], references: [id])
+}
+
+model JobPosting {
+  id             String          @id @default(cuid())
+  title          String
+  company        String
+  location       String
+  salaryMin      Int
+  salaryMax      Int
+  skills         String[]
+  domain         String
+  url            String
+  status         JobStatus       @default(ACTIVE)
+  postedAt       DateTime        @default(now())
+  expiresAt      DateTime?
+  bookmarkedJobs BookmarkedJob[]
+
+  @@index([domain])
+  @@index([status])
+}
+
+model BookmarkedJob {
+  id        String     @id @default(cuid())
+  userId    String
+  jobId     String
+  createdAt DateTime   @default(now())
+  job       JobPosting @relation(fields: [jobId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
+
+  @@unique([userId, jobId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  actionUrl String?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+}
+
+model InterviewQuestion {
+  id          String     @id @default(cuid())
+  role        String
+  question    String
+  category    Category
+  difficulty  Difficulty @default(MEDIUM)
+  modelAnswer String?
+  createdAt   DateTime   @default(now())
+
+  @@index([role, category])
+}
+
+enum UserRole {
+  LEARNER
+  ADMIN
+  INSTRUCTOR
+}
+
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ContentType {
+  VIDEO
+  READING
+  QUIZ
+  PROJECT
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum PublishStatus {
+  PUBLISHED
+  DRAFT
+}
+
+enum Category {
+  TECHNICAL
+  BEHAVIORAL
+  SYSTEM_DESIGN
+  DOMAIN_SPECIFIC
+}
+
+enum JobStatus {
+  ACTIVE
+  EXPIRED
+}
+
+enum NotificationType {
+  STREAK_RISK
+  LEVEL_UP
+  NEW_JOB
+  CERT_READY
+  WELCOME
+  ACHIEVEMENT
+  SYSTEM
+}

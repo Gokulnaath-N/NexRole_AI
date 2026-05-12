@@ -1,0 +1,19 @@
+# Python (if any Python files)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Node.js (if any JS files)
+node_modules/
+*.log
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
